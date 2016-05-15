@@ -15,7 +15,6 @@ def GetParameter():
 	parser.add_argument('-b',dest = 'brute',action = 'store_true',default = False,help = 'brute force')
 	parser.add_argument('-n',dest = 'uname',help = 'username')
 	parser.add_argument('-d',dest =  'pwd',help  = 'password.txt')
-	parser.add_argument('-p',dest = 'proccess',type = int,default = 2,help = 'proccess num')
 	parser.add_argument('-t',dest = 'threads',type = int, default = 2,help = 'threads num')
 	args = parser.parse_args()
 	return args.__dict__
