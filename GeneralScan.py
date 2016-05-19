@@ -62,21 +62,22 @@ class WordPress_Scan():
 		self.count = 0;
 		PluginThread=[]
 		ExistList = []
-		PluginQueue = Queue(maxsize = 10000)
+		self.flag = 0
+		self.PluginQueue = Queue(maxsize = 10000)
 		linecount = len(open('./loopholes_plugin.txt','rU').readlines())
 		Plugin_Path =  "http://{0}".format(self.url)
 		if(os.path.exists(r'./loopholes_plugin.txt')):
 			file = open(r'./loopholes_plugin.txt','r')
 			for line in file:
 				PluginList = line.strip()
-				PluginQueue.put(PluginList)
+				self.PluginQueue.put(PluginList)
 			file.close()
-			PluginQueue.cancel_join_thread() 
+			self.PluginQueue.cancel_join_thread() 
 		else:
 			print " file does not exist!"
 		start = time.time()
 		for count in range(5):
-			t = threading.Thread(target = self.PluginScan,args = (PluginQueue,linecount,ExistList))
+			t = threading.Thread(target = self.PluginScan,args = (linecount,ExistList))
 			t.setDaemon(True)
 			t.start()
 			PluginThread.append(t)
@@ -87,29 +88,23 @@ class WordPress_Scan():
 			print "\33[31m%s\33[0m" %j
 		end = time.time()
 		#print "Plugin_Scan_Time: %f s" % (end - start)
-
-	def PluginScan(self,PluginQueue,linecount,ExistList):
+		
+	def PluginScan(self,linecount,ExistList):
 		thread = threading.current_thread()
-		while 1:
+		while not self.PluginQueue.empty():
 			Plugin_Path =  self.url
-			if(not PluginQueue.empty()):
-				PluginDir = PluginQueue.get()
-			else:
-				break
-			if(self.count == linecount):
+			try:
+				PluginDir = self.PluginQueue.get(timeout = 1)
+			except:
 				break
 			Plugin_Path = "%s/wp-content/plugins/%s/" %(Plugin_Path,PluginDir)
-			try:
-				Plugin_re = requests.get(Plugin_Path,headers = HEADERS)
-				if(Plugin_re.status_code == 200 or Plugin_re.status_code == 403):
-					ExistList.append(PluginDir)
-				Plugin_Path =  self.url
-			except:
-				print "\33[31mconnect fail\33[0m" 
+			Plugin_re = requests.get(Plugin_Path,headers = HEADERS,timeout = 3)
+			if(Plugin_re.status_code == 200 or Plugin_re.status_code == 403):
+				ExistList.append(PluginDir)
+			Plugin_Path =  self.url
 			self.count+=1
-			if(self.count<=linecount):
-				sys.stdout.write('Current full schedule:'+str(str(self.count)+'/'+str(linecount))+"\r")
-				sys.stdout.flush()
+			sys.stdout.write('Current full schedule:'+str(str(self.count)+'/'+str(linecount))+"\r")
+			sys.stdout.flush()
 
 	def Brute_Force(self):
 		self.Brute_path1 = self.url+'/wp-login.php'
