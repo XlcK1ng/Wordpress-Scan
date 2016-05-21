@@ -8,6 +8,7 @@ if __name__ == '__main__':
  	plugins =  PluginCheck(Arguments['url'])
  	print "Scan URL: http://" +format(Arguments['url'])
 	print "Start Vulnerability......\n"
+	scan.Connect_Test()
  	scan.Server_Scan()
 	scan.VersionScan()
 	scan.ThemesScan()
