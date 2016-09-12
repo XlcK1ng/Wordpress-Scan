@@ -1,11 +1,19 @@
-from init import *
-from GeneralScan import *
-from PluginCheck import *
+#!/usr/bin/env python 
+# -*- coding: utf-8 -*- 
 
-if __name__ == '__main__':
- 	Arguments =  GetParameter()
+import os
+from lib.__init__ import *
+from lib.GeneralScan import *
+from lib.PluginCheck import *
+
+
+def main():
+	Arguments = GetParameter()
  	scan =  WordPress_Scan(Arguments)
  	plugins =  PluginCheck(Arguments['url'])
+	if Arguments['exp'] == True:
+		plugins.show()
+		return 
  	print "Scan URL: http://" +format(Arguments['url'])
 	print "Start Vulnerability......\n"
 	scan.Connect_Test()
@@ -16,8 +24,13 @@ if __name__ == '__main__':
 	print ""
 	plugins.scan()
 	scan.LoadPlugin()
-	if (Arguments['brute']):
+	if Arguments['brute']:
 		scan.Brute_Force()
+
+if __name__ == '__main__':
+	main()
+	
+ 	
 
 		
 

