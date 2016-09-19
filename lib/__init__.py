@@ -25,7 +25,7 @@ def GetParameter():
 
 	parser.add_argument('-u',dest = 'url',help = 'Enter the URL to be detected example:baidu.com')
 
-	parser.add_argument('-h',action = 'help',help = 'export help')
+	parser.add_argument('-h',action = 'help',help = 'Export help')
 
 	parser.add_argument('-b',dest = 'brute',action = 'store_true',default = False,help = 'Are you trying to brute force')
 	
@@ -39,6 +39,16 @@ def GetParameter():
 	parser.add_argument('--pt',dest = 'pthreads',type = int, default = 2,help = 'Number of Thread Checker Plugin')
 	
 	parser.add_argument('--show',dest = 'exp',action = 'store_true',default = False,help = 'Shows the attack program that can be used')
+
+	parser.add_argument('-z',dest = 'zoomeye',action = 'store_true',default = False,help = 'Use Zoomeye find wordprss website ')
+
+	parser.add_argument('-p',dest = 'page',help = 'Zoomeye Page')
+
+	parser.add_argument('-k',dest = 'keyword',help = 'Zoomeye Keyword')
+
+	parser.add_argument('--zt',dest = 'zoomeyethread',type = int,default = 2 ,help = 'Zoomeye Scan thread num ')
+
+	parser.add_argument('-v',dest = 'version',action = 'store_true',default = False,help = 'Echo version')
 	
 	args = parser.parse_args()
 	return args.__dict__

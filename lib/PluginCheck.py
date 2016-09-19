@@ -11,7 +11,16 @@ class PluginCheck():
 		self.explist.append('WordPress Memphis Document Library Plugin 3.1.5 Path Disclosure')
 
 	def scan(self):
+		# try:
+		# 	tmp = requests.get(self.url,timeout = 5)
+		# except:
+		# 	print self.url+' connect timeout'
+		# 	return
 		#Wordpress Plugins jQuery Html5 File Upload
+
+		test = self.url+'/wp-admin/tools.php?ghostexport=true&submit=Download+Ghost+file'
+		a = requests.get(test)
+		print a.status_code
 		
 		self.path1 =   self.url+'/wp-admin/admin-ajax.php?action=load_ajax_function'
 		self.path2 =  self.url+'/wp-content/plugins/jquery-html5-file-upload/'
