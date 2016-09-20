@@ -10,17 +10,17 @@ from lib.ZoomeyeScan import *
 
 def zeye(Arguments):
 	z = Zoomeye(Arguments['keyword'],Arguments['page'],Arguments['zoomeyethread'])
-	print "Connect Zoomeye ..."
+	print "[*] Connect Zoomeye ..."
 	z.GetIP()
 	z.reportstart()
 	z.readfile()
-	print "Start Scan ..."
+	print "[*] Start Scan ..."
 	z.startthread()
 
 def main():
 	Arguments = GetParameter()
 	if Arguments['version']:
-		print 'Lee Sin v1.0  Author: Superbread'
+		print '[*] Lee Sin v1.0  Author: Superbread'
 		return
 	elif Arguments['zoomeye']:
 		zeye(Arguments)
@@ -31,12 +31,12 @@ def main():
 		z.show()
 		return
 	elif Arguments['url'] == None:
-		print 'ERROR : unrecognized arguments'
+		print '[*] ERROR : unrecognized arguments'
 		return 
 	scan =  WordPress_Scan(Arguments)
  	plugins =  PluginCheck(Arguments['url'])
-	print "Scan URL: http://" +format(Arguments['url'])
-	print "Start Vulnerability......\n"
+	print "[*] Scan URL: http://" +format(Arguments['url'])
+	print "[*] Start Vulnerability......\n"
 	scan.Connect_Test()
  	scan.Server_Scan()
 	scan.VersionScan()
@@ -44,7 +44,8 @@ def main():
 	scan.AuthorScan()
 	print ""
 	plugins.scan()
-	scan.LoadPlugin()
+	if Arguments['pluginlist']:
+		scan.LoadPlugin()
 	if Arguments['brute']:
 		scan.Brute_Force()
 	

@@ -33,6 +33,7 @@ def GetParameter():
 	
 	parser.add_argument('-d',dest =  'pwd',help  = 'Password dictionary')
 
+	parser.add_argument('--sp',dest = 'pluginlist',action = 'store_true',default = False,help = 'Test whether the installation of the dictionary in the sensitive')
 	
 	parser.add_argument('--bt',dest = 'bthreads',type = int, default = 2,help = 'Blasting login password of the number of threads')
 	

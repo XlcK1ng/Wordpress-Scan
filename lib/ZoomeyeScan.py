@@ -7,6 +7,7 @@ import json
 import Queue
 import threading
 import time
+import re
 
 class Zoomeye():
     def __init__(self,keyword,pagenum,thread):
@@ -50,7 +51,7 @@ class Zoomeye():
         while True:
             try:
                 Searchurl = 'https://api.zoomeye.org/host/search?query=%s&page=%s'%(key,str(page))
-                print 'Search in page :'+str(page)
+                print '[*] Search in page :'+str(page)
                 Searchre = requests.get(Searchurl,headers = Header,verify=False)
                 GetData  = json.loads(Searchre.text)
                 for i in GetData['matches']:
@@ -79,7 +80,7 @@ class Zoomeye():
 
     def show(self):
         number = 0
-        print 'Attack Program List: \n'
+        print '[*] Attack Program List: \n'
         for i in self.namelist:
             number = number+ 1
             print "\33[31m"'[+] '+str(number)+': '+i+"\033[0m"
@@ -87,8 +88,8 @@ class Zoomeye():
             
 
     def startthread(self):
-        print 'Scanning IP quantity: '+str(len(self.TestIpArgs))
-        print '\33[31m[+] WarningThis feature is only for reference, the need for manual testing scan results ! ! !\033[0m'
+        print '[*] Scanning IP quantity: '+str(len(self.TestIpArgs))
+        print '\33[31m[*] WarningThis feature is only for reference, the need for manual testing scan results ! ! !\033[0m'
         threadlist = []
         for i in range(self.thread):
             t = threading.Thread(target=self.scan)
@@ -125,7 +126,8 @@ class Zoomeye():
                     print '[+]'+thread.getName()+'\t'+rootaddr+self.vulnerabilitylist[i]
                     try:
                         R = requests.get(rootaddr+self.vulnerabilitylist[i],timeout = 3)
-                        if R.status_code == 200:
+                        data = re.search(r'wp-login.php',R.text)
+                        if R.status_code == 200 and data == None:
                             self.mutex.acquire()
                             result = rootaddr+self.vulnerabilitylist[i]+'==='+self.namelist[i]
                             self.resultlist.append(result)

