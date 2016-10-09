@@ -21,31 +21,31 @@ Wordpress Vulnerability Scan
 
 参数说明：
 
- -u URL              输入单一URL
+     -u URL              输入单一URL
 
- -h                  输出程序帮助
+     -h                  输出程序帮助
 
- -b                  是否使用暴力破解测试
+     -b                  是否使用暴力破解测试
 
- -n UNAME            指定暴力破解用户名（可以不指定）
+     -n UNAME            指定暴力破解用户名（可以不指定）
 
- -d PWD              指定所使用的字典
+     -d PWD              指定所使用的字典
 
- –sp                 检查安装了哪些插件
+     –sp                 检查安装了哪些插件
 
- –bt BTHREADS        暴力破解线程数
+     –bt BTHREADS        暴力破解线程数
 
- –pt PTHREADS        检查插件树木的线程数
+     –pt PTHREADS        检查插件树木的线程数
 
- –show               显示当前可以检测的所有漏洞名称
+     –show               显示当前可以检测的所有漏洞名称
 
- -z                  使用钟馗之眼
+     -z                  使用钟馗之眼
 
- -p PAGE             指定钟馗之眼页数
+     -p PAGE             指定钟馗之眼页数
 
- -k KEYWORD          指定使用关键字
+     -k KEYWORD          指定使用关键字
 
- –zt ZOOMEYETHREAD   指定批量测试线程数
+     –zt ZOOMEYETHREAD   指定批量测试线程数
 
- -v                  查看当前版本
+     -v                  查看当前版本
 
